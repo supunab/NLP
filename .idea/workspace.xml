@@ -2,9 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="50cc3b1a-568f-4e6a-87c1-71d337de696b" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/com/smbsoft/CYKAlgorithm.java" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/com/smbsoft/InsideOutside.java" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/conll2003.eng.train" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/out/production/NLPAlgorithms/com/smbsoft/ForwardBackward.class" afterPath="$PROJECT_DIR$/out/production/NLPAlgorithms/com/smbsoft/ForwardBackward.class" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/com/smbsoft/ForwardBackward.java" afterPath="$PROJECT_DIR$/src/com/smbsoft/ForwardBackward.java" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -35,8 +37,8 @@
       <file leaf-file-name="ForwardBackward.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/com/smbsoft/ForwardBackward.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="133">
-              <caret line="95" column="31" lean-forward="true" selection-start-line="95" selection-start-column="31" selection-end-line="95" selection-end-column="31" />
+            <state relative-caret-position="105">
+              <caret line="82" column="0" lean-forward="true" selection-start-line="82" selection-start-column="0" selection-end-line="82" selection-end-column="0" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="method#initRandomParameters#0;class#ForwardBackward#0" expanded="false" />
@@ -45,11 +47,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="CYKAlgorithm.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="CYKAlgorithm.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/com/smbsoft/CYKAlgorithm.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="544">
-              <caret line="71" column="9" lean-forward="true" selection-start-line="71" selection-start-column="9" selection-end-line="71" selection-end-column="9" />
+            <state relative-caret-position="510">
+              <caret line="34" column="0" lean-forward="true" selection-start-line="34" selection-start-column="0" selection-end-line="34" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="InsideOutside.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/com/smbsoft/InsideOutside.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="255">
+              <caret line="17" column="43" lean-forward="false" selection-start-line="17" selection-start-column="43" selection-end-line="17" selection-end-column="43" />
               <folding />
             </state>
           </provider>
@@ -96,8 +108,9 @@
       <list>
         <option value="$PROJECT_DIR$/src/com/smbsoft/Main.java" />
         <option value="/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/lib/rt.jar!/java/util/ArrayList.class" />
-        <option value="$PROJECT_DIR$/src/com/smbsoft/ForwardBackward.java" />
         <option value="$PROJECT_DIR$/src/com/smbsoft/CYKAlgorithm.java" />
+        <option value="$PROJECT_DIR$/src/com/smbsoft/ForwardBackward.java" />
+        <option value="$PROJECT_DIR$/src/com/smbsoft/InsideOutside.java" />
       </list>
     </option>
   </component>
@@ -186,13 +199,13 @@
     <property name="SearchEverywhereHistoryKey" value="find and replace&#9;ACTION&#9;MethodDuplicates" />
   </component>
   <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/src" />
-      <recent name="$PROJECT_DIR$/src/com/smbsoft" />
-    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src" />
       <recent name="$PROJECT_DIR$" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src" />
+      <recent name="$PROJECT_DIR$/src/com/smbsoft" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -632,12 +645,12 @@
       <workItem from="1499217891588" duration="3694000" />
       <workItem from="1499226745653" duration="12196000" />
       <workItem from="1499270062450" duration="2562000" />
-      <workItem from="1499314386172" duration="26904000" />
+      <workItem from="1499314386172" duration="28500000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="49627000" />
+    <option name="totallyTimeSpent" value="51223000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-1" y="0" width="1368" height="742" extended-state="6" />
@@ -893,10 +906,18 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/com/smbsoft/CYKAlgorithm.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="510">
+          <caret line="34" column="0" lean-forward="true" selection-start-line="34" selection-start-column="0" selection-end-line="34" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/com/smbsoft/ForwardBackward.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="133">
-          <caret line="95" column="31" lean-forward="true" selection-start-line="95" selection-start-column="31" selection-end-line="95" selection-end-column="31" />
+        <state relative-caret-position="105">
+          <caret line="82" column="0" lean-forward="true" selection-start-line="82" selection-start-column="0" selection-end-line="82" selection-end-column="0" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="method#initRandomParameters#0;class#ForwardBackward#0" expanded="false" />
@@ -904,10 +925,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/com/smbsoft/CYKAlgorithm.java">
+    <entry file="file://$PROJECT_DIR$/src/com/smbsoft/InsideOutside.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="544">
-          <caret line="71" column="9" lean-forward="true" selection-start-line="71" selection-start-column="9" selection-end-line="71" selection-end-column="9" />
+        <state relative-caret-position="255">
+          <caret line="17" column="43" lean-forward="false" selection-start-line="17" selection-start-column="43" selection-end-line="17" selection-end-column="43" />
           <folding />
         </state>
       </provider>

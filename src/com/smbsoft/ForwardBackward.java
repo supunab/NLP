@@ -88,7 +88,7 @@ public class ForwardBackward{
 
         bf.close();
 
-        final int iterations = 25;
+        final int iterations = 100;
 
         //findMostProbableSequence(sentenceTokens.get(3).toArray(new String[sentenceTokens.get(3).size()]));
 
