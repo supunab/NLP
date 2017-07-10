@@ -1,189 +1,357 @@
 package com.smbsoft;
-import java.util.ArrayList;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.*;
+
 
 public class InsideOutside{
-    public static void execute(){
-        ArrayList<UnitProduction> unitProductions = new ArrayList<>();
-        ArrayList<OtherProduction> otherProductions = new ArrayList<>();
 
-        // Add the CFG here
+    public static void execute() throws IOException{
+        // productions
+        HashMap<String, HashMap<String, Float>> unitProductions = new HashMap<>();
+        HashMap<String, HashMap<String, HashMap<String, Float>>> otherProductions = new HashMap<>();
 
-        // number of non terminals
-        final int nt = 10;
+        // Obtain the data from the text file
+        BufferedReader bf = new BufferedReader(new FileReader("src/ptb.deve_sec22.formatted.txt"));
 
-        // number of terminals
-        final int t = 100;
+        String line;
 
-        // observation sequence
-        int[] observation = new int[]{0, 1, 2, 2, 1, 4 , 4, 4, 1, 2, 2, 0 , 0, 3};
+        String[] temp;
+        String[] prod;
 
-        new InsideOutside(nt, t)
-                .unitProductions(unitProductions)
-                .otherProductions(otherProductions)
-                .observation(observation)
-                .start();
+        Random rand = new Random();
+
+        ArrayList<String[]> sentences = new ArrayList<>();
+
+        ArrayList<String> sentence = new ArrayList<>();
+
+        while ((line = bf.readLine()) != null){
+            sentence.clear();
+
+            temp = line.split("<DIV>");
+
+            for(int i = 0; i < temp.length; i ++){
+                prod = temp[i].split("->");
+                prod[0] = prod[0].trim();
+                prod[1] = prod[1].trim();
+
+                if (prod[1].split(" ").length == 1){
+                    // unit prod
+                    if (!unitProductions.containsKey(prod[0]))
+                        unitProductions.put(prod[0], new HashMap<>());
+
+                    if (!unitProductions.get(prod[0]).containsKey(prod[1]))
+                        unitProductions.get(prod[0]).put(prod[1], (float) rand.nextInt(1000));
+
+                    sentence.add(prod[1]);
+
+                }else {
+                    // other prod
+                    if(!otherProductions.containsKey(prod[0]))
+                        otherProductions.put(prod[0], new HashMap<>());
+
+                    if(!otherProductions.get(prod[0]).containsKey(prod[1].split(" ")[0]))
+                        otherProductions.get(prod[0]).put(prod[1].split(" ")[0], new HashMap<>());
+
+                    if(!otherProductions.get(prod[0]).get(prod[1].split(" ")[0]).containsKey(prod[1].split(" ")[1]))
+                        otherProductions.get(prod[0]).get(prod[1].split(" ")[0]).put(prod[1].split(" ")[1], (float) rand.nextInt(1000));
+
+                }
+            }
+
+            // add the sentence to sentences
+            sentences.add(sentence.toArray(new String[sentence.size()]));
+        }
+
+        new InsideOutside(unitProductions, otherProductions, sentences);
+
 
     }
 
-    int[] observation;
+    private int[] observation;
 
-    ArrayList<UnitProduction> unitProductions;
-    ArrayList<OtherProduction> otherProductions;
+    HashMap<String, HashMap<String, Float>> unitProductions;
+    HashMap<String, HashMap<String, HashMap<String, Float>>> otherProductions;
 
-    float[][][] inside;
-    float[][][] outside;
+    ArrayList<String[]> sentences;
 
-    boolean[][][] insideFound;
-    boolean[][][] outsideFound;
+    HashMap<String , float[][]> inside;
+    HashMap<String , float[][]> outside;
 
-    // Nubmer of non terminals
-    final int nt;
+    HashMap<String, boolean[][]> insideFound;
+    HashMap<String, boolean[][]> outsideFound;
 
-    // Number of terminals
-    final int t;
-
-    // size of the input sequence
     int n;
+    int nt;
 
-    public InsideOutside(int nt, int t){
-        this.nt = nt;
-        this.t = t;
+    public InsideOutside(HashMap<String, HashMap<String, Float>> unitProductions, HashMap<String, HashMap<String, HashMap<String, Float>>> otherProductions, ArrayList<String[]> sentences) {
+        this.unitProductions = unitProductions;
+        this.otherProductions = otherProductions;
+        this.sentences = sentences;
     }
 
-    public void start(){
-        n = observation.length;
+    public void start() {
 
-        // init as all zeros
-        inside = new float[nt][n][n];
-        outside = new float[nt][n][n];
+        for (String[] sentence : sentences) {
+            n = sentence.length;
 
-        insideFound = new boolean[nt][n][n];
-        outsideFound = new boolean[nt][n][n];
+            // init as all zeros
+            inside = new HashMap<>();
+            outside = new HashMap<>();
 
-        // base case - inside terms
-        for(UnitProduction production : unitProductions){
-            for(int i = 0; i < n; i ++){
-                if (observation[i] == production.production[1])
-                    inside[production.production[0]][i][i] = production.potential[i];
-                insideFound[production.production[0]][i][i] = true;
+            // add all the non terminals to inside, outside values
+            Iterator<String> iter1 = unitProductions.keySet().iterator();
+
+            while (iter1.hasNext()) {
+                inside.put(iter1.next(), new float[n][n]);
+                outside.put(iter1.next(), new float[n][n]);
             }
 
+            iter1 = otherProductions.keySet().iterator();
+
+            while (iter1.hasNext()) {
+                inside.put(iter1.next(), new float[n][n]);
+                outside.put(iter1.next(), new float[n][n]);
+            }
+
+            nt = inside.keySet().size();
+
+            insideFound = new HashMap<>();
+            outsideFound = new HashMap<>();
+
+
+            iter1 = insideFound.keySet().iterator();
+
+            while (iter1.hasNext()){
+                insideFound.put(iter1.next(), new boolean[n][n]);
+            }
+
+            iter1 = outsideFound.keySet().iterator();
+
+            while (iter1.hasNext()){
+                outsideFound.put(iter1.next(), new boolean[n][n]);
+            }
+
+            //calculate the potentials
+            calculatePotentials();
+
+            Iterator<String> iter2;
+            Iterator<String> iter3;
+            String a,b,c;
+
+            // base case - inside terms
+            iter1 = unitProductions.keySet().iterator();
+
+            while(iter1.hasNext()){
+                a = iter1.next();
+
+                iter2 = unitProductions.get(a).keySet().iterator();
+
+                while (iter2.hasNext()){
+                    b = iter2.next();
+
+                    for(int i = 0; i < n; i ++){
+                        if (sentence[i].equals(b))
+                            inside.get(b)[i][i] = unitProductions.get(a).get(b);
+                        insideFound.get(b)[i][i] = true;
+                    }
+                }
+            }
+
+            //fill up the inside values using recursive function
+            // iterate through all the non terminals
+            iter1 = inside.keySet().iterator();
+
+            while (iter1.hasNext()){
+                a = iter1.next();
+
+                for(int i = 0 ; i < n-1; i ++){
+                    for(int j = i + 1; j < n; j ++){
+                        inside.get(a)[i][j] = getInside(a, i, j);
+                    }
+                }
+            }
+
+
+            // base cases - outside
+            outside.get("S")[0][observation.length - 1] = 1; // others are init to zero
+
+            // find outside values
+            // iterate through all the non terminals
+
+            iter1 = inside.keySet().iterator();
+
+            while (iter1.hasNext()){
+                a = iter1.next();
+
+                for(int i = 0 ; i < n-1; i ++){
+                    for(int j = i + 1; j < n; j ++){
+                        outside.get(a)[i][j] = getOutside(a, i, j);
+                    }
+                }
+            }
+
+
+
+        }
+    }
+
+    private void calculatePotentials(){
+        Iterator<String> iter1;
+        Iterator<String> iter2;
+        Iterator<String> iter3;
+
+        float tempSum = 0;
+
+        iter1 = unitProductions.keySet().iterator();
+        String a, b, c;
+
+        while(iter1.hasNext()){
+            a = iter1.next();
+            tempSum = 0;
+
+            iter2 = unitProductions.get(a).keySet().iterator();
+
+            while(iter2.hasNext()){
+                b = iter2.next();
+                tempSum += unitProductions.get(a).get(b);
+            }
+
+            // update the potentials
+            iter2 = unitProductions.get(a).keySet().iterator();
+
+            while (iter2.hasNext()){
+                b = iter2.next();
+                unitProductions.get(a).put(b , unitProductions.get(a).get(b) / tempSum);
+            }
         }
 
-        // fill up inside values using recursive function
-        for(int nont = 0; nont < nt; nont ++){
-            for(int i = 0 ; i < n-1; i ++){
-                for(int j = i + 1; j < n; j ++){
-                    inside[nont][i][j] = getInside(nont, i, j);
+        // for other productions
+        iter1 = otherProductions.keySet().iterator();
+
+        while(iter1.hasNext()){
+            a = iter1.next();
+            tempSum = 0;
+
+            iter2 = otherProductions.get(a).keySet().iterator();
+
+            while(iter2.hasNext()){
+                b = iter2.next();
+
+                iter3 = otherProductions.get(a).get(b).keySet().iterator();
+
+                while(iter3.hasNext()){
+                    c = iter3.next();
+
+                    tempSum += otherProductions.get(a).get(b).get(c);
+                }
+            }
+
+            // update the value
+
+            while(iter2.hasNext()){
+                b = iter2.next();
+
+                iter3 = otherProductions.get(a).get(b).keySet().iterator();
+
+                while(iter3.hasNext()){
+                    c = iter3.next();
+
+                    otherProductions.get(a).get(b).put(c,
+                            otherProductions.get(a).get(b).get(c) / tempSum);
                 }
             }
         }
 
-        // base cases - outside
-        outside[0][0][observation.length - 1] = 1; // others are init to zero
-
-        // find outside values
-        for(int nont = 0; nont < nt; nont ++){
-            for(int i = 0 ; i < n-1; i ++){
-                for(int j = i + 1; j < n; j ++){
-                    outside[nont][i][j] = getInside(nont, i, j);
-                }
-            }
-        }
 
     }
 
-    public float getInside(int nt, int i, int j){
-        if (insideFound[nt][i][j])
-            return inside[nt][i][j];
+    private float getInside(String nt, int i, int j){
+
+        if (insideFound.get(nt)[i][j]){
+            return inside.get(nt)[i][j];
+        }
 
         // if not found, find
-        inside[nt][i][j] = 0;
-        for(OtherProduction production : otherProductions){
-            if (production.production[0] == nt){
+        inside.get(nt)[i][j] = 0;
+
+        Iterator<String> iter2, iter3;
+        String b, c;
+
+        iter2 = otherProductions.get(nt).keySet().iterator();
+
+        while(iter2.hasNext()){
+            b = iter2.next();
+
+            iter3 = otherProductions.get(nt).get(b).keySet().iterator();
+
+            while (iter3.hasNext()){
+                c = iter3.next();
+
                 for(int k = i; k < j; k ++){
-                    inside[nt][i][j] += production.potential[i][k][j] * getInside(production.production[1], i, k) * getInside(production.production[2], k+1, j);
+                    inside.get(nt)[i][j] += otherProductions.get(nt).get(b).get(c) * getInside(b, i, k) * getInside(c, k+1, j);
                 }
+
             }
         }
 
-        insideFound[nt][i][j] = true;
-        return inside[nt][i][j];
+        insideFound.get(nt)[i][j] = true;
+        return inside.get(nt)[i][j];
     }
 
 
-    public float getOutside(int nt, int i, int j){
-        if (outsideFound[nt][i][j])
-            return outside[nt][i][j];
+    private float getOutside(String nt, int i, int j){
+        if (outsideFound.get(nt)[i][j])
+            return outside.get(nt)[i][j];
 
-        outside[nt][i][j] = 0;
 
-        for(OtherProduction production : otherProductions){
+        outside.get(nt)[i][j] = 0;
 
-            if (production.production[2] == nt){
-                for(int k = 0; k < i; k ++){
-                    outside[nt][i][j] += production.potential[k][i-1][j] * getInside(production.production[1], k, i - 1) * getOutside( production.production[0], k, j);
-                }
+        Iterator<String> iter1, iter2, iter3;
+        String b, c;
 
-            }
+        iter1 = otherProductions.keySet().iterator();
 
-            if(production.production[1] == nt){
+        while(iter1.hasNext()){
+            b = iter1.next();
+
+            iter2 = otherProductions.get(b).get(nt).keySet().iterator();
+
+            while (iter2.hasNext()){
+                c = iter2.next();
+
                 for(int k = j + 1; k < n; k ++){
-                    outside[nt][i][j] += production.potential[i][j][k] * getInside(production.production[2], j + 1 , k) * getOutside(production.production[0], i, k);
+                    outside.get(nt)[i][j] += otherProductions.get(b).get(nt).get(c) * getInside(c, j + 1 , k) * getOutside(b, i, k);
                 }
 
+            }
+
+            iter2 = otherProductions.get(b).keySet().iterator();
+
+            while (iter2.hasNext()){
+                c = iter2.next();
+
+                for(int k = 0; k < i; k ++){
+                    outside.get(nt)[i][j] += otherProductions.get(b).get(c).get(nt) * getInside(c, k, i - 1) * getOutside(b, k, j);
+                }
 
             }
         }
 
-        outsideFound[nt][i][j] = true;
-        return outside[nt][i][j];
+        outsideFound.get(nt)[i][j] = true;
+        return outside.get(nt)[i][j];
     }
 
-    public InsideOutside unitProductions(ArrayList<UnitProduction> unitProductions){
+    public InsideOutside unitProductions(HashMap unitProductions){
         this.unitProductions = unitProductions;
         return this;
     }
 
-    public InsideOutside otherProductions(ArrayList<OtherProduction> otherProductions){
+    public InsideOutside otherProductions(HashMap otherProductions){
         this.otherProductions = otherProductions;
         return this;
     }
-
-    public InsideOutside observation(int[] observation){
-        this.observation = observation;
-        return this;
-    }
-
-
-    private class UnitProduction{
-        // should be private
-        int[] production;
-        float[] potential;
-
-        public UnitProduction(int left, int right, int observations){
-            production = new int[2];
-            production[0] = left;
-            production[1] = right;
-
-            potential = new float[observations];
-        }
-
-    }
-
-    private class OtherProduction{
-        // should be private
-        int[] production;
-        float[][][] potential;
-
-        public OtherProduction(int left, int r1, int r2, int observations){
-            production = new int[3];
-            production[0] = left;
-            production[1] = r1;
-            production[2] = r2;
-
-            potential = new float[observations][observations][observations];
-        }
-    }
-
 }

@@ -9,7 +9,7 @@ import java.util.HashMap;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-         new ForwardBackward().execute();
+//         new ForwardBackward().execute();
 
 //        HashMap<String, HashMap<String, Double>> transProb = new HashMap<>();
 //
@@ -18,5 +18,7 @@ public class Main {
 //        transProb.put("NN", temp);
 //
 //        System.out.println(transProb.get("NN").get("SP"));
+
+        InsideOutside.execute();
     }
 }
