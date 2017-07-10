@@ -3,7 +3,6 @@ package com.smbsoft;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.*;
 
 
@@ -99,6 +98,8 @@ public class InsideOutside{
     public void start(int iterations) {
 
         for(int x = 0; x < iterations; x ++){
+            System.out.println("Iteration : " + (x+1));
+
             calculatePotentials();
             clearCounts();
 
@@ -108,39 +109,33 @@ public class InsideOutside{
                 // init as all zeros
                 inside = new HashMap<>();
                 outside = new HashMap<>();
+                insideFound = new HashMap<>();
+                outsideFound = new HashMap<>();
 
                 // add all the non terminals to inside, outside values
                 Iterator<String> iter1 = unitProductions.keySet().iterator();
+                String temp;
 
                 while (iter1.hasNext()) {
-                    inside.put(iter1.next(), new float[n][n]);
-                    outside.put(iter1.next(), new float[n][n]);
+                    temp = iter1.next();
+                    inside.put(temp, new float[n][n]);
+                    outside.put(temp, new float[n][n]);
+                    insideFound.put(temp, new boolean[n][n]);
+                    outsideFound.put(temp, new boolean[n][n]);
                 }
 
                 iter1 = otherProductions.keySet().iterator();
 
                 while (iter1.hasNext()) {
-                    inside.put(iter1.next(), new float[n][n]);
-                    outside.put(iter1.next(), new float[n][n]);
+                    temp = iter1.next();
+                    inside.put(temp, new float[n][n]);
+                    outside.put(temp, new float[n][n]);
+                    insideFound.put(temp, new boolean[n][n]);
+                    outsideFound.put(temp, new boolean[n][n]);
                 }
 
                 nt = inside.keySet().size();
 
-                insideFound = new HashMap<>();
-                outsideFound = new HashMap<>();
-
-
-                iter1 = insideFound.keySet().iterator();
-
-                while (iter1.hasNext()){
-                    insideFound.put(iter1.next(), new boolean[n][n]);
-                }
-
-                iter1 = outsideFound.keySet().iterator();
-
-                while (iter1.hasNext()){
-                    outsideFound.put(iter1.next(), new boolean[n][n]);
-                }
 
                 Iterator<String> iter2;
                 Iterator<String> iter3;
@@ -159,8 +154,8 @@ public class InsideOutside{
 
                         for(int i = 0; i < n; i ++){
                             if (sentence[i].equals(b))
-                                inside.get(b)[i][i] = unitProductions.get(a).get(b);
-                            insideFound.get(b)[i][i] = true;
+                                inside.get(a)[i][i] = unitProductions.get(a).get(b);
+                            insideFound.get(a)[i][i] = true;
                         }
                     }
                 }
@@ -178,6 +173,8 @@ public class InsideOutside{
                         }
                     }
                 }
+
+                System.out.println("Inside Values Computed");
 
 
                 // base cases - outside
@@ -198,6 +195,8 @@ public class InsideOutside{
                     }
                 }
 
+                System.out.println("Outside Values Computed");
+
                 // calculate the expected counts
                 float z = inside.get("S")[0][sentence.length - 1];
 
@@ -214,6 +213,8 @@ public class InsideOutside{
                         }
                     }
                 }
+
+                System.out.println("Unit Counts Done");
 
                 // other production counts
                 iter1 = otherProductions.keySet().iterator();
@@ -244,6 +245,8 @@ public class InsideOutside{
                         }
                     }
                 }
+
+                System.out.println("Other Counts Done");
 
 
             }
@@ -332,6 +335,9 @@ public class InsideOutside{
         Iterator<String> iter2, iter3;
         String b, c;
 
+        if (!otherProductions.containsKey(nt))
+            return  0;
+
         iter2 = otherProductions.get(nt).keySet().iterator();
 
         while(iter2.hasNext()){
@@ -361,7 +367,7 @@ public class InsideOutside{
 
         outside.get(nt)[i][j] = 0;
 
-        Iterator<String> iter1, iter2, iter3;
+        Iterator<String> iter1, iter2;
         String b, c;
 
         iter1 = otherProductions.keySet().iterator();
@@ -369,13 +375,16 @@ public class InsideOutside{
         while(iter1.hasNext()){
             b = iter1.next();
 
-            iter2 = otherProductions.get(b).get(nt).keySet().iterator();
+            if (otherProductions.get(b).containsKey(nt)){
+                iter2 = otherProductions.get(b).get(nt).keySet().iterator();
 
-            while (iter2.hasNext()){
-                c = iter2.next();
+                while (iter2.hasNext()){
+                    c = iter2.next();
 
-                for(int k = j + 1; k < n; k ++){
-                    outside.get(nt)[i][j] += otherProductions.get(b).get(nt).get(c) * getInside(c, j + 1 , k) * getOutside(b, i, k);
+                    for(int k = j + 1; k < n; k ++){
+                        outside.get(nt)[i][j] += otherProductions.get(b).get(nt).get(c) * getInside(c, j + 1 , k) * getOutside(b, i, k);
+                    }
+
                 }
 
             }
@@ -385,10 +394,11 @@ public class InsideOutside{
             while (iter2.hasNext()){
                 c = iter2.next();
 
-                for(int k = 0; k < i; k ++){
-                    outside.get(nt)[i][j] += otherProductions.get(b).get(c).get(nt) * getInside(c, k, i - 1) * getOutside(b, k, j);
+                if (otherProductions.get(b).get(c).containsKey(nt)){
+                    for(int k = 0; k < i; k ++){
+                        outside.get(nt)[i][j] += otherProductions.get(b).get(c).get(nt) * getInside(c, k, i - 1) * getOutside(b, k, j);
+                    }
                 }
-
             }
         }
 
