@@ -66,15 +66,16 @@ public class InsideOutside{
             sentences.add(sentence.toArray(new String[sentence.size()]));
         }
 
-        new InsideOutside(unitProductions, otherProductions, sentences);
+        new InsideOutside(unitProductions, otherProductions, sentences).start(10);
 
 
     }
 
-    private int[] observation;
-
     HashMap<String, HashMap<String, Float>> unitProductions;
     HashMap<String, HashMap<String, HashMap<String, Float>>> otherProductions;
+
+    HashMap<String, HashMap<String, Float>> unitCounts;
+    HashMap<String, HashMap<String, HashMap<String, Float>>> otherCounts;
 
     ArrayList<String[]> sentences;
 
@@ -90,112 +91,162 @@ public class InsideOutside{
     public InsideOutside(HashMap<String, HashMap<String, Float>> unitProductions, HashMap<String, HashMap<String, HashMap<String, Float>>> otherProductions, ArrayList<String[]> sentences) {
         this.unitProductions = unitProductions;
         this.otherProductions = otherProductions;
+        this.unitCounts = (HashMap<String, HashMap<String,Float>>) unitProductions.clone();
+        this.otherCounts = (HashMap<String, HashMap<String,HashMap<String,Float>>>) otherProductions.clone();
         this.sentences = sentences;
     }
 
-    public void start() {
+    public void start(int iterations) {
 
-        for (String[] sentence : sentences) {
-            n = sentence.length;
-
-            // init as all zeros
-            inside = new HashMap<>();
-            outside = new HashMap<>();
-
-            // add all the non terminals to inside, outside values
-            Iterator<String> iter1 = unitProductions.keySet().iterator();
-
-            while (iter1.hasNext()) {
-                inside.put(iter1.next(), new float[n][n]);
-                outside.put(iter1.next(), new float[n][n]);
-            }
-
-            iter1 = otherProductions.keySet().iterator();
-
-            while (iter1.hasNext()) {
-                inside.put(iter1.next(), new float[n][n]);
-                outside.put(iter1.next(), new float[n][n]);
-            }
-
-            nt = inside.keySet().size();
-
-            insideFound = new HashMap<>();
-            outsideFound = new HashMap<>();
-
-
-            iter1 = insideFound.keySet().iterator();
-
-            while (iter1.hasNext()){
-                insideFound.put(iter1.next(), new boolean[n][n]);
-            }
-
-            iter1 = outsideFound.keySet().iterator();
-
-            while (iter1.hasNext()){
-                outsideFound.put(iter1.next(), new boolean[n][n]);
-            }
-
-            //calculate the potentials
+        for(int x = 0; x < iterations; x ++){
             calculatePotentials();
+            clearCounts();
 
-            Iterator<String> iter2;
-            Iterator<String> iter3;
-            String a,b,c;
+            for (String[] sentence : sentences) {
+                n = sentence.length;
 
-            // base case - inside terms
-            iter1 = unitProductions.keySet().iterator();
+                // init as all zeros
+                inside = new HashMap<>();
+                outside = new HashMap<>();
 
-            while(iter1.hasNext()){
-                a = iter1.next();
+                // add all the non terminals to inside, outside values
+                Iterator<String> iter1 = unitProductions.keySet().iterator();
 
-                iter2 = unitProductions.get(a).keySet().iterator();
+                while (iter1.hasNext()) {
+                    inside.put(iter1.next(), new float[n][n]);
+                    outside.put(iter1.next(), new float[n][n]);
+                }
 
-                while (iter2.hasNext()){
-                    b = iter2.next();
+                iter1 = otherProductions.keySet().iterator();
 
-                    for(int i = 0; i < n; i ++){
-                        if (sentence[i].equals(b))
-                            inside.get(b)[i][i] = unitProductions.get(a).get(b);
-                        insideFound.get(b)[i][i] = true;
+                while (iter1.hasNext()) {
+                    inside.put(iter1.next(), new float[n][n]);
+                    outside.put(iter1.next(), new float[n][n]);
+                }
+
+                nt = inside.keySet().size();
+
+                insideFound = new HashMap<>();
+                outsideFound = new HashMap<>();
+
+
+                iter1 = insideFound.keySet().iterator();
+
+                while (iter1.hasNext()){
+                    insideFound.put(iter1.next(), new boolean[n][n]);
+                }
+
+                iter1 = outsideFound.keySet().iterator();
+
+                while (iter1.hasNext()){
+                    outsideFound.put(iter1.next(), new boolean[n][n]);
+                }
+
+                Iterator<String> iter2;
+                Iterator<String> iter3;
+                String a,b,c;
+
+                // base case - inside terms
+                iter1 = unitProductions.keySet().iterator();
+
+                while(iter1.hasNext()){
+                    a = iter1.next();
+
+                    iter2 = unitProductions.get(a).keySet().iterator();
+
+                    while (iter2.hasNext()){
+                        b = iter2.next();
+
+                        for(int i = 0; i < n; i ++){
+                            if (sentence[i].equals(b))
+                                inside.get(b)[i][i] = unitProductions.get(a).get(b);
+                            insideFound.get(b)[i][i] = true;
+                        }
                     }
                 }
-            }
 
-            //fill up the inside values using recursive function
-            // iterate through all the non terminals
-            iter1 = inside.keySet().iterator();
+                //fill up the inside values using recursive function
+                // iterate through all the non terminals
+                iter1 = inside.keySet().iterator();
 
-            while (iter1.hasNext()){
-                a = iter1.next();
+                while (iter1.hasNext()){
+                    a = iter1.next();
 
-                for(int i = 0 ; i < n-1; i ++){
-                    for(int j = i + 1; j < n; j ++){
-                        inside.get(a)[i][j] = getInside(a, i, j);
+                    for(int i = 0 ; i < n-1; i ++){
+                        for(int j = i + 1; j < n; j ++){
+                            inside.get(a)[i][j] = getInside(a, i, j);
+                        }
                     }
                 }
-            }
 
 
-            // base cases - outside
-            outside.get("S")[0][observation.length - 1] = 1; // others are init to zero
+                // base cases - outside
+                outside.get("S")[0][sentence.length - 1] = 1; // others are init to zero
 
-            // find outside values
-            // iterate through all the non terminals
+                // find outside values
+                // iterate through all the non terminals
 
-            iter1 = inside.keySet().iterator();
+                iter1 = inside.keySet().iterator();
 
-            while (iter1.hasNext()){
-                a = iter1.next();
+                while (iter1.hasNext()){
+                    a = iter1.next();
 
-                for(int i = 0 ; i < n-1; i ++){
-                    for(int j = i + 1; j < n; j ++){
-                        outside.get(a)[i][j] = getOutside(a, i, j);
+                    for(int i = 0 ; i < n-1; i ++){
+                        for(int j = i + 1; j < n; j ++){
+                            outside.get(a)[i][j] = getOutside(a, i, j);
+                        }
                     }
                 }
+
+                // calculate the expected counts
+                float z = inside.get("S")[0][sentence.length - 1];
+
+                // unit production counts
+                iter1 = unitCounts.keySet().iterator();
+
+                while (iter1.hasNext()){
+                    a = iter1.next();
+
+                    for(int i = 0; i < sentence.length; i ++){
+                        if (unitProductions.get(a).containsKey(sentence[i])){
+                            unitCounts.get(a).put(sentence[i],
+                                     unitCounts.get(a).get(sentence[i]) + inside.get(a)[i][i] * outside.get(a)[i][i] / z);
+                        }
+                    }
+                }
+
+                // other production counts
+                iter1 = otherProductions.keySet().iterator();
+
+                while(iter1.hasNext()){
+                    a = iter1.next();
+
+                    iter2 = otherProductions.get(a).keySet().iterator();
+
+                    while (iter2.hasNext()){
+                        b = iter2.next();
+
+                        iter3 = otherProductions.get(a).get(b).keySet().iterator();
+
+                        while (iter3.hasNext()){
+                            c = iter3.next();
+
+                            for(int i = 0; i < sentence.length - 1; i ++){
+                                for(int k = i; k < sentence.length - 1; k ++){
+                                    for(int j = k + 1; j < sentence.length; j ++){
+                                        otherCounts.get(a).get(b).put(c,
+                                                otherCounts.get(a).get(b).get(c) + outside.get(a)[i][j]
+                                                        * otherProductions.get(a).get(b).get(c)
+                                                        * inside.get(b)[i][k] * inside.get(c)[k+1][j] / z);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+
             }
-
-
-
         }
     }
 
@@ -213,19 +264,19 @@ public class InsideOutside{
             a = iter1.next();
             tempSum = 0;
 
-            iter2 = unitProductions.get(a).keySet().iterator();
+            iter2 = unitCounts.get(a).keySet().iterator();
 
             while(iter2.hasNext()){
                 b = iter2.next();
-                tempSum += unitProductions.get(a).get(b);
+                tempSum += unitCounts.get(a).get(b);
             }
 
             // update the potentials
-            iter2 = unitProductions.get(a).keySet().iterator();
+            iter2 = unitCounts.get(a).keySet().iterator();
 
             while (iter2.hasNext()){
                 b = iter2.next();
-                unitProductions.get(a).put(b , unitProductions.get(a).get(b) / tempSum);
+                unitProductions.get(a).put(b , unitCounts.get(a).get(b) / tempSum);
             }
         }
 
@@ -246,7 +297,7 @@ public class InsideOutside{
                 while(iter3.hasNext()){
                     c = iter3.next();
 
-                    tempSum += otherProductions.get(a).get(b).get(c);
+                    tempSum += otherCounts.get(a).get(b).get(c);
                 }
             }
 
@@ -261,7 +312,7 @@ public class InsideOutside{
                     c = iter3.next();
 
                     otherProductions.get(a).get(b).put(c,
-                            otherProductions.get(a).get(b).get(c) / tempSum);
+                            otherCounts.get(a).get(b).get(c) / tempSum);
                 }
             }
         }
@@ -343,6 +394,49 @@ public class InsideOutside{
 
         outsideFound.get(nt)[i][j] = true;
         return outside.get(nt)[i][j];
+    }
+
+    private void clearCounts(){
+        Iterator<String> iter1, iter2, iter3;
+        String a, b, c;
+
+        // unitCounts
+        iter1 = unitCounts.keySet().iterator();
+
+        while(iter1.hasNext()){
+            a = iter1.next();
+
+            iter2 = unitCounts.get(a).keySet().iterator();
+
+            while (iter2.hasNext()){
+                b = iter2.next();
+
+                unitCounts.get(a).put(b, 0f);
+            }
+
+        }
+
+        // otherCounts
+        iter1 = otherCounts.keySet().iterator();
+
+        while(iter1.hasNext()){
+            a = iter1.next();
+
+            iter2 = otherCounts.get(a).keySet().iterator();
+
+            while (iter2.hasNext()){
+                b = iter2.next();
+
+                iter3 = otherCounts.get(a).get(b).keySet().iterator();
+
+                while (iter3.hasNext()){
+                    c = iter3.next();
+
+                    otherCounts.get(a).get(b).put(c, 0f);
+                }
+            }
+        }
+
     }
 
     public InsideOutside unitProductions(HashMap unitProductions){
