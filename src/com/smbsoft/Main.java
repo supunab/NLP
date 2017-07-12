@@ -19,6 +19,8 @@ public class Main {
 //
 //        System.out.println(transProb.get("NN").get("SP"));
 
-        InsideOutside.execute();
+//        InsideOutside.execute();
+
+        new CRF().execute();
     }
 }
