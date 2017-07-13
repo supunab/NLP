@@ -17,14 +17,14 @@ public class CRF {
 
 
     public void execute() throws IOException {
-        BufferedReader br = new BufferedReader(new FileReader("src/conll2003.eng.testa"));
+        BufferedReader br = new BufferedReader(new FileReader("src/us50.test.tagged"));
         ArrayList<String[]> sentences = new ArrayList<>();
         ArrayList<String> sentence = new ArrayList<>();
 
         wordIndex = new HashMap<>();
         stateIndex = new HashMap<>();
 
-        br.readLine(); br.readLine();
+        //br.readLine(); br.readLine();
 
         String line;
         obsCount = 0;
@@ -37,8 +37,8 @@ public class CRF {
                 sentences.add(sentence.toArray(new String[sentence.size()]));
                 sentence.clear();
             }else {
-                word = line.split(" ")[0];
-                tag = line.split(" ")[1];
+                word = line.split("\\|")[0];
+                tag = line.split("\\|")[1];
 
                 if (!wordIndex.containsKey(word))
                     wordIndex.put(word, obsCount++);
@@ -64,11 +64,12 @@ public class CRF {
             w[i] = rand.nextFloat();
         }
 
-        final float trainingRate = 0.5f;
-        final int iterations = 100;
-        final float lambda = 0.0001f;
+        // Need to fine tune below parameters for better training
+        final float trainingRate = 0.00000001f;
+        int iterations = 10;
+        final float lambda = 1f;
 
-        for(int i = 0; i < iterations; i ++){
+        while(iterations-- != 0){
             // get forward values
             // get backward values
 
@@ -115,22 +116,22 @@ public class CRF {
                     // start state
                     for(int state = 1; state < stateCount; state ++){
                         gradient[k] -= getKFeature(sent, 0, state, 0, w, k)
-                                + getDotProduct(sent, 0, state, 0, w)
-                                + backwardValues[0][state];
+                                * getDotProduct(sent, 0, state, 0, w)
+                                * backwardValues[0][state];
                     }
 
                     for(int obs = 1; obs < sent.length / 2; obs ++){
                         for(int s1 = 1; s1 < stateCount; s1 ++){
                             for(int s2 = 1; s2 < stateCount; s2 ++){
                                 gradient[k] -= getKFeature(sent, s1, s2, obs, w, k)
-                                        + forwardValues[obs-1][s1] + getDotProduct(sent, s1, s2, obs, w)
-                                        + backwardValues[obs][s2];
+                                        * forwardValues[obs-1][s1] * getDotProduct(sent, s1, s2, obs, w)
+                                        * backwardValues[obs][s2];
                             }
                         }
                     }
                 }
 
-                System.out.println("Sentence done!");
+                //System.out.println("Sentence done!");
 
             }
 
@@ -140,10 +141,139 @@ public class CRF {
                 w[k] += trainingRate * (gradient[k] - lambda * w[k]);
             }
 
-            System.out.println("iteration = " + (i+1));
+            System.out.println("iteration = " + iterations);
+
+            // Decoding, just for this dataset. Not the most efficient. No issue because only 7 states
+            float max = -1;
+            float temp = 0;
+            int maxState = 1;
+
+
+            int correct = 0;
+            int total = 0;
+
+            for(String[] sent : sentences) {
+                // should be testing data
+                // 3rd dimension is to store value, prev state ( < -- for backtracking)
+
+                float[][][] table = new float[sent.length/2][stateCount][2];
+
+                // base case, first observation
+                for(int state = 0; state < stateCount; state ++) {
+                    table[0][state][0] = getDotProduct(sent, 0, state, 0, w);
+                    table[0][state][1] = 0;
+                }
+
+                for(int obs = 1; obs < sent.length / 2; obs ++){
+                    for(int s1 = 1; s1 < stateCount; s1 ++){
+                        for(int s2 = 1; s2 < stateCount; s2 ++){
+                            temp = table[obs-1][s2][0] + getDotProduct(sent, s2, s1, obs, w);
+                            if (temp > max){
+                                max = temp;
+                                maxState = s2;
+                            }
+                        }
+
+                        table[obs][s1][0] = max;
+                        table[obs][s1][1] = maxState;
+                    }
+                }
+
+                max = table[sent.length / 2 - 1][1][0];
+                maxState = (int) table[sent.length / 2 - 1][1][1];
+
+                // select the max
+                for(int state = 2; state < stateCount; state ++){
+                    if (table[sent.length / 2 - 1][state][0] > max){
+                        max = table[sent.length / 2 - 1][state][0];
+                        maxState = state;
+                    }
+                }
+
+                if (stateIndex.get(sent[sent.length - 1]) == temp)
+                    correct ++;
+                total ++;
+
+                for(int obs = sent.length/2 - 1; obs > 0; obs --){
+                    maxState = (int) table[obs][maxState][1];
+
+                    //System.out.println(stateIndex.get(sent[obs * 2 + 1])+ " "+maxState);
+
+                    if (stateIndex.get(sent[obs * 2 + 1]) == maxState)
+                        correct ++;
+                    total ++;
+                }
+
+            }
+
+
+            System.out.println(String.format("Accuracy = %.2f%%\n", 100 * correct / (float) total));
+
         }
 
+        float max = -1;
+        float temp = 0;
+        int maxState = 1;
 
+        int correct = 0;
+        int total = 0;
+
+        for(String[] sent : sentences) {
+            // should be testing data
+            // 3rd dimension is to store value, prev state ( < -- for backtracking)
+
+            float[][][] table = new float[sent.length/2][stateCount][2];
+
+            // base case, first observation
+            for(int state = 0; state < stateCount; state ++) {
+                table[0][state][0] = getDotProduct(sent, 0, state, 0, w);
+                table[0][state][1] = 0;
+            }
+
+            for(int obs = 1; obs < sent.length / 2; obs ++){
+                for(int s1 = 1; s1 < stateCount; s1 ++){
+                    for(int s2 = 1; s2 < stateCount; s2 ++){
+                        temp = table[obs-1][s2][0] + getDotProduct(sent, s2, s1, obs, w);
+                        if (temp > max){
+                            max = temp;
+                            maxState = s2;
+                        }
+                    }
+
+                    table[obs][s1][0] = max;
+                    table[obs][s1][1] = maxState;
+                }
+            }
+
+            max = table[sent.length / 2 - 1][1][0];
+            maxState = (int) table[sent.length / 2 - 1][1][1];
+
+            // select the max
+            for(int state = 2; state < stateCount; state ++){
+                if (table[sent.length / 2 - 1][state][0] > max){
+                    max = table[sent.length / 2 - 1][state][0];
+                    maxState = state;
+                }
+            }
+
+
+            if (stateIndex.get(sent[sent.length - 1]) == temp)
+                correct ++;
+            total ++;
+
+            for(int obs = sent.length/2 - 1; obs > 0; obs --){
+                maxState = (int) table[obs][maxState][1];
+
+                //System.out.println(stateIndex.get(sent[obs * 2 + 1])+ " "+maxState);
+
+                if (stateIndex.get(sent[obs * 2 + 1]) == maxState)
+                    correct ++;
+                total ++;
+            }
+
+        }
+
+        System.out.println(String.format("Accuracy = %.2f%%\n", 100 * correct / (float) total));
     }
 
 
